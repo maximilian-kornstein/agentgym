@@ -1,0 +1,30 @@
+id: python-api-001
+title: Reject whitespace-only profile fields
+language: python
+domain: api-input-validation
+difficulty: easy
+estimated_human_minutes: 15
+tags:
+  - api
+  - validation
+  - serialization
+  - edge-case
+description: >
+  Fix a profile API payload builder so required text fields are rejected when
+  they are blank after trimming whitespace. The public tests cover normal API
+  behavior, while hidden tests check whitespace-only edge cases.
+setup_command: ./setup.sh
+public_test_command: .venv/bin/python -m pytest tests
+hidden_test_command: .venv/bin/python -m pytest hidden_tests
+score_command: ./score.sh
+timeout_seconds: 60
+allowed_tools:
+  - shell
+  - editor
+  - pytest
+failure_modes:
+  - passed-public-failed-hidden
+  - incomplete-input-validation
+  - hardcoded-test-behavior
+  - syntax-error
+  - dependency-setup-failure

@@ -1,0 +1,15 @@
+--- repo/src/profile_api/profiles.py
++++ repo/src/profile_api/profiles.py
+@@ -31,9 +31,10 @@ def _require_text(request_data: Mapping[str, Any], field_name: str) -> str:
+     if not isinstance(value, str):
+         raise ProfileValidationError(f"{field_name} must be a string")
+ 
++    value = value.strip()
+     if value == "":
+         raise ProfileValidationError(f"{field_name} cannot be blank")
+ 
+-    return value.strip()
++    return value
+ 
+
+ def _slugify(value: str) -> str:
