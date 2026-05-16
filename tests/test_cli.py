@@ -63,3 +63,61 @@ def test_run_command_prints_public_and_hidden_test_summary(capsys):
     assert "Public tests: pass" in captured.out
     assert "Hidden tests: fail" in captured.out
     assert "Error: hidden_tests_failed" in captured.out
+
+
+def test_run_suite_runs_all_tasks_and_writes_suite_result(tmp_path, monkeypatch, capsys):
+    _make_suite_task(tmp_path, "task-pass", hidden_test_command="exit 0")
+    _make_suite_task(tmp_path, "task-hidden-fail", hidden_test_command="exit 1")
+    monkeypatch.setenv("AGENTGYM_ROOT", str(tmp_path))
+
+    exit_code = main(["run-suite"])
+    captured = capsys.readouterr()
+
+    assert exit_code == 1
+    assert "id                public  hidden  status" in captured.out
+    assert "task-pass         pass    pass    pass" in captured.out
+    assert "task-hidden-fail  pass    fail    fail" in captured.out
+    assert "2/2 tasks passed public tests" in captured.out
+    assert "1/2 tasks passed hidden tests" in captured.out
+    assert "Suite result: " in captured.out
+
+
+def test_run_suite_rejects_invalid_tasks(tmp_path, monkeypatch, capsys):
+    invalid_task = _make_suite_task(tmp_path, "invalid-task")
+    (invalid_task / "score.sh").unlink()
+    monkeypatch.setenv("AGENTGYM_ROOT", str(tmp_path))
+
+    exit_code = main(["run-suite"])
+    captured = capsys.readouterr()
+
+    assert exit_code == 2
+    assert "invalid-task: invalid" in captured.err
+    assert "missing required file or directory: score.sh" in captured.err
+
+
+def _make_suite_task(
+    root,
+    task_id: str,
+    *,
+    setup_command: str = "exit 0",
+    public_test_command: str = "exit 0",
+    hidden_test_command: str = "exit 0",
+):
+    task_dir = _make_task(root, task_id)
+    (task_dir / "task.yaml").write_text(
+        f"""
+id: {task_id}
+title: Suite Task
+language: python
+domain: test
+difficulty: easy
+description: Suite task.
+setup_command: {setup_command}
+public_test_command: {public_test_command}
+hidden_test_command: {hidden_test_command}
+score_command: ./score.sh
+timeout_seconds: 60
+""".lstrip(),
+        encoding="utf-8",
+    )
+    return task_dir
