@@ -1,0 +1,21 @@
+--- repo/src/account_api/accounts.py
++++ repo/src/account_api/accounts.py
+@@ -23,9 +23,17 @@
+         "account_type": account_type,
+     }
+ 
++    tax_id = None
+     if "tax_id" in request_data:
+-        payload["tax_id"] = _require_text(request_data, "tax_id")
++        tax_id = _require_text(request_data, "tax_id")
+ 
++    if account_type == "business" and tax_id is None:
++        raise AccountValidationError("business accounts require tax_id")
++    if account_type == "personal" and tax_id is not None:
++        raise AccountValidationError("personal accounts cannot include tax_id")
++    if tax_id is not None:
++        payload["tax_id"] = tax_id
++
+     return payload
+ 
+ 

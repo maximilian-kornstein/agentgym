@@ -8,12 +8,12 @@ The goal is to measure where agents still fail at real software engineering work
 
 AgentGym v0.1 is intentionally small:
 
-- Two Python API-validation tasks: `tasks/python-api-001` and `tasks/python-api-002`.
+- Three Python API-validation tasks: `tasks/python-api-001`, `tasks/python-api-002`, and `tasks/python-api-003`.
 - A local CLI for discovery, validation, and temporary-workspace execution.
 - Public tests, hidden tests, deterministic scoring, and a reference patch.
 - Authoring docs for creating the next Python API tasks.
 
-The first task is a synthetic Python API bug: a profile payload validator mishandles whitespace-only required fields. The second task checks a nested notification-preferences payload that coerces non-boolean values too permissively. Both are small enough to inspect quickly, but real enough to demonstrate the benchmark loop.
+The first task is a synthetic Python API bug: a profile payload validator mishandles whitespace-only required fields. The second task checks a nested notification-preferences payload that coerces non-boolean values too permissively. The third task checks a cross-field account/tax-id rule. All three are small enough to inspect quickly, but real enough to demonstrate the benchmark loop.
 
 ## Quickstart
 
