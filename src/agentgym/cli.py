@@ -13,8 +13,8 @@ def main(argv: list[str] | None = None) -> int:
 
     subparsers.add_parser("list", help="List available tasks.")
 
-    validate_parser = subparsers.add_parser("validate", help="Validate a task.")
-    validate_parser.add_argument("task_id")
+    validate_parser = subparsers.add_parser("validate", help="Validate one task, or all tasks if no id is given.")
+    validate_parser.add_argument("task_id", nargs="?")
 
     run_parser = subparsers.add_parser("run", help="Run a task in a temporary workspace.")
     run_parser.add_argument("task_id")
@@ -38,12 +38,18 @@ def _list_tasks() -> int:
         print("No tasks found.")
         return 0
 
-    for task in tasks:
-        print(f"{task.id}\t{task.title}\t{task.language}\t{task.difficulty}")
+    rows = [("id", "difficulty", "language", "title")]
+    rows.extend((task.id, task.difficulty, task.language, task.title) for task in tasks)
+    widths = [max(len(row[index]) for row in rows) for index in range(4)]
+    for row in rows:
+        print("  ".join(value.ljust(widths[index]) for index, value in enumerate(row)).rstrip())
     return 0
 
 
-def _validate_task(task_id: str) -> int:
+def _validate_task(task_id: str | None) -> int:
+    if task_id is None:
+        return _validate_all_tasks()
+
     task, errors = validate_task_id(task_id)
     if task is None:
         for error in errors:
@@ -57,6 +63,31 @@ def _validate_task(task_id: str) -> int:
         return 1
 
     print(f"{task_id}: valid")
+    return 0
+
+
+def _validate_all_tasks() -> int:
+    tasks = discover_tasks()
+    if not tasks:
+        print("No tasks found.", file=sys.stderr)
+        return 1
+
+    invalid_count = 0
+    for task in tasks:
+        errors = validate_task(task)
+        if errors:
+            invalid_count += 1
+            print(f"{task.id}: invalid", file=sys.stderr)
+            for error in errors:
+                print(f"- {error}", file=sys.stderr)
+        else:
+            print(f"{task.id}: valid")
+
+    if invalid_count:
+        print(f"{invalid_count} of {len(tasks)} tasks invalid", file=sys.stderr)
+        return 1
+
+    print(f"{len(tasks)} tasks valid")
     return 0
 
 

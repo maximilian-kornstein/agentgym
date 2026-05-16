@@ -33,7 +33,13 @@ List available tasks:
 agentgym list
 ```
 
-Validate a task:
+Validate all tasks:
+
+```bash
+agentgym validate
+```
+
+Validate one task:
 
 ```bash
 agentgym validate python-api-001
@@ -51,6 +57,7 @@ If your shell cannot find the `agentgym` command after installation, use the mod
 
 ```bash
 python3 -m agentgym.cli list
+python3 -m agentgym.cli validate
 python3 -m agentgym.cli validate python-api-001
 python3 -m agentgym.cli run python-api-001
 ```
@@ -65,7 +72,8 @@ python3 -m pytest
 ## What The CLI Does
 
 - `agentgym list` shows available tasks.
-- `agentgym validate <task_id>` checks task metadata and required files.
+- `agentgym validate` checks metadata and required files for every task.
+- `agentgym validate <task_id>` checks metadata and required files for one task.
 - `agentgym run <task_id>` copies the task into a temporary workspace, runs setup and scoring there, captures logs, and leaves the source task untouched.
 
 AgentGym does not invoke coding agents yet. For now, it proves the task format and scoring loop.
