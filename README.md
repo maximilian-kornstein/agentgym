@@ -8,12 +8,12 @@ The goal is to measure where agents still fail at real software engineering work
 
 AgentGym v0.1 is intentionally small:
 
-- One golden task: `tasks/python-api-001`.
+- Two Python API-validation tasks: `tasks/python-api-001` and `tasks/python-api-002`.
 - A local CLI for discovery, validation, and temporary-workspace execution.
 - Public tests, hidden tests, deterministic scoring, and a reference patch.
 - Authoring docs for creating the next Python API tasks.
 
-The first task is a synthetic Python API bug: a profile payload validator mishandles whitespace-only required fields. It is small enough to inspect quickly, but real enough to demonstrate the benchmark loop.
+The first task is a synthetic Python API bug: a profile payload validator mishandles whitespace-only required fields. The second task checks a nested notification-preferences payload that coerces non-boolean values too permissively. Both are small enough to inspect quickly, but real enough to demonstrate the benchmark loop.
 
 ## Quickstart
 
@@ -33,13 +33,13 @@ List available tasks:
 agentgym list
 ```
 
-Validate the golden task:
+Validate a task:
 
 ```bash
 agentgym validate python-api-001
 ```
 
-Run the golden task in a temporary workspace:
+Run a task in a temporary workspace:
 
 ```bash
 agentgym run python-api-001

@@ -1,0 +1,12 @@
+--- repo/src/notification_api/notifications.py
++++ repo/src/notification_api/notifications.py
+@@ -41,6 +41,8 @@ def _build_preferences(raw_preferences: Any) -> dict[str, bool]:
+     for key, value in raw_preferences.items():
+         if key not in preferences:
+             raise NotificationValidationError(f"unsupported notification preference: {key}")
+-        preferences[key] = bool(value)
++        if not isinstance(value, bool):
++            raise NotificationValidationError(f"{key} must be a boolean")
++        preferences[key] = value
+ 
+     return preferences

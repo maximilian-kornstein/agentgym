@@ -1,0 +1,31 @@
+id: python-api-002
+title: Reject non-boolean notification preferences
+language: python
+domain: api-input-validation
+difficulty: easy
+estimated_human_minutes: 20
+tags:
+  - api
+  - validation
+  - nested-payload
+  - type-coercion
+description: >
+  Fix a notification API payload builder so nested preference values must be
+  actual booleans. The public tests cover defaults and valid booleans, while
+  hidden tests catch string and integer coercion.
+setup_command: ./setup.sh
+public_test_command: .venv/bin/python -m pytest tests
+hidden_test_command: .venv/bin/python -m pytest hidden_tests
+score_command: ./score.sh
+timeout_seconds: 60
+allowed_tools:
+  - shell
+  - editor
+  - pytest
+failure_modes:
+  - passed-public-failed-hidden
+  - incomplete-input-validation
+  - over-permissive-type-coercion
+  - hardcoded-test-behavior
+  - syntax-error
+  - dependency-setup-failure
