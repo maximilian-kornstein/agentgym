@@ -19,9 +19,11 @@ The first task is a synthetic Python API bug: a profile payload validator mishan
 
 Requires Python 3.11+.
 
-Install the CLI:
+Clone the repo and install the CLI:
 
 ```bash
+git clone https://github.com/maximilian-kornstein/agentgym.git
+cd agentgym
 python3 -m pip install -e .
 ```
 
@@ -44,6 +46,14 @@ agentgym run python-api-001
 ```
 
 This run is expected to fail. The starter code passes public tests but fails hidden tests, which is the point of the golden task. The CLI prints the temporary run workspace and writes `.agentgym/result.json` inside that workspace.
+
+If your shell cannot find the `agentgym` command after installation, use the module form:
+
+```bash
+python3 -m agentgym.cli list
+python3 -m agentgym.cli validate python-api-001
+python3 -m agentgym.cli run python-api-001
+```
 
 Run AgentGym's package tests:
 
