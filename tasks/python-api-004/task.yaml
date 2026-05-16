@@ -1,0 +1,31 @@
+id: python-api-004
+title: Prevent internal user field leaks
+language: python
+domain: api-response-serialization
+difficulty: easy
+estimated_human_minutes: 20
+tags:
+  - api
+  - serialization
+  - privacy
+  - response-contract
+description: >
+  Fix a user API response builder so internal-only fields are not serialized
+  into public response payloads. The public tests cover normal response fields,
+  while hidden tests catch password hashes, notes, and admin flags leaking.
+setup_command: ./setup.sh
+public_test_command: .venv/bin/python -m pytest tests
+hidden_test_command: .venv/bin/python -m pytest hidden_tests
+score_command: ./score.sh
+timeout_seconds: 60
+allowed_tools:
+  - shell
+  - editor
+  - pytest
+failure_modes:
+  - passed-public-failed-hidden
+  - internal-field-serialization-leak
+  - response-contract-violation
+  - hardcoded-test-behavior
+  - syntax-error
+  - dependency-setup-failure

@@ -9,6 +9,7 @@ AgentGym tasks are small on purpose. Each task isolates one way a coding agent c
 | `python-api-001` | Whitespace-only required fields | Checks that trim happens before blank validation, not after. |
 | `python-api-002` | Over-permissive nested type coercion | Checks that `"false"`, `"yes"`, `1`, and `0` are rejected instead of coerced with `bool(value)`. |
 | `python-api-003` | Missing cross-field validation | Checks that business accounts require `tax_id` and personal accounts reject it. |
+| `python-api-004` | Internal-field serialization leak | Checks that password hashes, internal notes, admin flags, and other private fields are not returned. |
 
 ## `python-api-001`: Whitespace-Only Required Fields
 
@@ -27,6 +28,12 @@ The intended lesson: strict API validation should reject convenient coercion whe
 This task catches agents that validate each field in isolation but miss relationships between fields. `account_type` and `tax_id` are individually simple, but the correct behavior depends on their combination.
 
 The intended lesson: real API validation often lives between fields, not only inside fields.
+
+## `python-api-004`: Internal-Field Serialization Leak
+
+This task catches agents that build an API response by copying an internal record and then adjusting public fields. That can pass ordinary public tests while leaking fields like `password_hash`, `internal_notes`, `admin_flags`, or internal billing metadata.
+
+The intended lesson: API response builders should allowlist public fields, not copy internal records wholesale.
 
 ## Why These Are Useful
 

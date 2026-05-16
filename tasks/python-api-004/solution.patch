@@ -1,0 +1,16 @@
+--- repo/src/user_api/users.py
++++ repo/src/user_api/users.py
+@@ -14,7 +14,12 @@ def build_user_response(user_record: Mapping[str, Any]) -> dict[str, Any]:
+     """Serialize an internal user record into a public API response."""
+     _require_fields(user_record)
+ 
+-    response = dict(user_record)
++    response = {
++        "id": user_record["id"],
++        "email": user_record["email"],
++        "display_name": user_record["display_name"],
++        "is_active": user_record["is_active"],
++    }
+     response["email"] = _require_text(user_record, "email").lower()
+     response["display_name"] = _require_text(user_record, "display_name")
+ 
