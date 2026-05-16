@@ -128,7 +128,7 @@ solution.patch
 - `score.sh` runs public and hidden tests.
 - `solution.patch` is the reference fix used to verify the task.
 
-See `docs/failure_modes.md` for the current failure-mode map. See `docs/task_authoring.md` for the task quality bar and authoring checklist. See `docs/python_api_task_template.md` for the recommended shape of new Python API tasks.
+See `docs/methodology.md` for the benchmark method. See `docs/failure_modes.md` for the current failure-mode map. See `docs/task_authoring.md` for the task quality bar and authoring checklist. See `docs/python_api_task_template.md` for the recommended shape of new Python API tasks.
 
 ## Roadmap
 
