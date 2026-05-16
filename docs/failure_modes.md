@@ -1,0 +1,41 @@
+# Failure Modes
+
+AgentGym tasks are small on purpose. Each task isolates one way a coding agent can produce a patch that looks reasonable against visible tests but fails stricter hidden checks.
+
+## Current Tasks
+
+| Task | Failure mode | What hidden tests catch |
+| --- | --- | --- |
+| `python-api-001` | Whitespace-only required fields | Checks that trim happens before blank validation, not after. |
+| `python-api-002` | Over-permissive nested type coercion | Checks that `"false"`, `"yes"`, `1`, and `0` are rejected instead of coerced with `bool(value)`. |
+| `python-api-003` | Missing cross-field validation | Checks that business accounts require `tax_id` and personal accounts reject it. |
+
+## `python-api-001`: Whitespace-Only Required Fields
+
+This task catches agents that validate text fields with only `value == ""` and then trim later. That patch can pass ordinary public tests while still accepting `"   "` or `"\t\n  "` as valid input.
+
+The intended lesson: validation order matters. Normalize before checking blank required fields.
+
+## `python-api-002`: Nested Boolean Type Coercion
+
+This task catches agents that use `bool(value)` on nested API values. In Python, values like `"false"` and `"yes"` are truthy strings, while `0` and `1` are integers, not booleans. Accepting them silently changes the API contract.
+
+The intended lesson: strict API validation should reject convenient coercion when the contract says a value must already be a boolean.
+
+## `python-api-003`: Cross-Field Validation
+
+This task catches agents that validate each field in isolation but miss relationships between fields. `account_type` and `tax_id` are individually simple, but the correct behavior depends on their combination.
+
+The intended lesson: real API validation often lives between fields, not only inside fields.
+
+## Why These Are Useful
+
+These are not large tasks. They are probes. A useful probe should:
+
+- expose a specific failure mode
+- be easy to inspect
+- have deterministic hidden checks
+- pass with a small reference patch
+- be hard to solve by changing only visible-test behavior
+
+The first mini-benchmark stays narrow so failures can be compared across tasks instead of hidden inside unrelated complexity.
