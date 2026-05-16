@@ -103,14 +103,22 @@ def _run_task(task_id: str) -> int:
     result = run_task(task)
     print(f"Task: {task_id}")
     print(f"Status: {result.status}")
+    print(f"Public tests: {_format_test_status(result.public_tests_passed)}")
+    print(f"Hidden tests: {_format_test_status(result.hidden_tests_passed)}")
     print(f"Run workspace: {result.run_workspace}")
     print(f"Result: {result.result_path}")
     print(f"Logs: {result.logs_path}")
     if result.error_type:
         print(f"Error: {result.error_type}")
-        if result.error_type == "score_failed":
-            print("Note: score_failed can be expected for starter tasks that fail hidden tests.")
+        if result.error_type == "hidden_tests_failed":
+            print("Note: hidden_tests_failed can be expected for starter tasks.")
     return 0 if result.status == "pass" else 1
+
+
+def _format_test_status(value: bool | None) -> str:
+    if value is None:
+        return "not run"
+    return "pass" if value else "fail"
 
 
 if __name__ == "__main__":

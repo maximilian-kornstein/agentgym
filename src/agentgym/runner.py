@@ -21,7 +21,11 @@ class RunResult:
     logs_path: Path
     run_workspace: Path
     setup_exit_code: int | None
+    public_exit_code: int | None
+    hidden_exit_code: int | None
     score_exit_code: int | None
+    public_tests_passed: bool | None
+    hidden_tests_passed: bool | None
     error_type: str | None
 
 
@@ -46,25 +50,38 @@ def run_task(task: Task) -> RunResult:
         log_path=logs_dir / "setup.log",
     )
 
-    score_result: subprocess.CompletedProcess[str] | _TimeoutResult | None = None
+    public_result: subprocess.CompletedProcess[str] | _TimeoutResult | None = None
+    hidden_result: subprocess.CompletedProcess[str] | _TimeoutResult | None = None
     error_type: str | None = None
     status = "fail"
 
     if _exit_code(setup_result) != 0:
         error_type = "setup_timeout" if isinstance(setup_result, _TimeoutResult) else "setup_failed"
     else:
-        score_result = _run_command(
-            command=str(task.metadata["score_command"]),
+        _ensure_workspace_venv_link(run_workspace)
+        public_result = _run_command(
+            command=str(task.metadata["public_test_command"]),
             cwd=run_workspace,
             timeout_seconds=timeout_seconds,
-            log_path=logs_dir / "score.log",
+            log_path=logs_dir / "public.log",
         )
-        if _exit_code(score_result) == 0:
-            status = "pass"
+        if _exit_code(public_result) != 0:
+            error_type = "public_tests_timeout" if isinstance(public_result, _TimeoutResult) else "public_tests_failed"
         else:
-            error_type = "score_timeout" if isinstance(score_result, _TimeoutResult) else "score_failed"
+            hidden_result = _run_command(
+                command=str(task.metadata["hidden_test_command"]),
+                cwd=run_workspace,
+                timeout_seconds=timeout_seconds,
+                log_path=logs_dir / "hidden.log",
+            )
+            if _exit_code(hidden_result) == 0:
+                status = "pass"
+            else:
+                error_type = "hidden_tests_timeout" if isinstance(hidden_result, _TimeoutResult) else "hidden_tests_failed"
 
     completed_at = datetime.now(UTC)
+    public_exit_code = _exit_code(public_result)
+    hidden_exit_code = _exit_code(hidden_result)
     result_path = agentgym_dir / "result.json"
     result_data: dict[str, Any] = {
         "run_id": run_id,
@@ -74,7 +91,11 @@ def run_task(task: Task) -> RunResult:
         "duration_seconds": round(monotonic() - started_clock, 3),
         "status": status,
         "setup_exit_code": _exit_code(setup_result),
-        "score_exit_code": _exit_code(score_result),
+        "public_exit_code": public_exit_code,
+        "hidden_exit_code": hidden_exit_code,
+        "score_exit_code": hidden_exit_code,
+        "public_tests_passed": _tests_passed(public_exit_code),
+        "hidden_tests_passed": _tests_passed(hidden_exit_code),
         "logs_path": str(logs_dir),
         "run_workspace": str(run_workspace),
         "error_type": error_type,
@@ -87,7 +108,11 @@ def run_task(task: Task) -> RunResult:
         logs_path=logs_dir,
         run_workspace=run_workspace,
         setup_exit_code=_exit_code(setup_result),
-        score_exit_code=_exit_code(score_result),
+        public_exit_code=public_exit_code,
+        hidden_exit_code=hidden_exit_code,
+        score_exit_code=hidden_exit_code,
+        public_tests_passed=_tests_passed(public_exit_code),
+        hidden_tests_passed=_tests_passed(hidden_exit_code),
         error_type=error_type,
     )
 
@@ -146,6 +171,12 @@ def _exit_code(result: subprocess.CompletedProcess[str] | _TimeoutResult | None)
     return result.returncode
 
 
+def _tests_passed(exit_code: int | None) -> bool | None:
+    if exit_code is None:
+        return None
+    return exit_code == 0
+
+
 def _decode_timeout_output(value: str | bytes | None) -> str:
     if value is None:
         return ""
@@ -161,6 +192,14 @@ def _ignore_generated_files(_directory: str, names: list[str]) -> set[str]:
         for name in names
         if name in ignored or name.endswith(".egg-info") or name.endswith(".pyc")
     }
+
+
+def _ensure_workspace_venv_link(run_workspace: Path) -> None:
+    workspace_venv = run_workspace / ".venv"
+    repo_venv = run_workspace / "repo" / ".venv"
+    if workspace_venv.exists() or not repo_venv.exists():
+        return
+    workspace_venv.symlink_to(repo_venv)
 
 
 def _format_timestamp(value: datetime) -> str:
