@@ -161,12 +161,21 @@ def test_run_suite_runs_all_tasks_and_writes_suite_result(tmp_path, monkeypatch,
     suite_result_line = next(line for line in captured.out.splitlines() if line.startswith("Suite result: "))
     suite_result_path = suite_result_line.removeprefix("Suite result: ")
     suite_data = json.loads(open(suite_result_path, encoding="utf-8").read())
+    assert suite_data["agent_command"] is None
+    assert suite_data["agent_ran"] is False
+    assert suite_data["agent_commands_passed"] is None
     assert suite_data["tasks"][0]["primary_failure_mode"] == "test-failure-mode"
+    assert suite_data["tasks"][0]["agent_command"] is None
+    assert suite_data["tasks"][0]["agent_ran"] is False
+    assert suite_data["tasks"][0]["agent_exit_code"] is None
     failure_modes_by_task = {item["task_id"]: item for item in suite_data["failure_modes"]}
     assert failure_modes_by_task["task-pass"] == {
         "failure_mode": "test-failure-mode",
         "task_id": "task-pass",
         "status": "pass",
+        "agent_command": None,
+        "agent_ran": False,
+        "agent_exit_code": None,
         "public_tests_passed": True,
         "hidden_tests_passed": True,
         "error_type": None,
@@ -175,10 +184,83 @@ def test_run_suite_runs_all_tasks_and_writes_suite_result(tmp_path, monkeypatch,
         "failure_mode": "test-failure-mode",
         "task_id": "task-hidden-fail",
         "status": "fail",
+        "agent_command": None,
+        "agent_ran": False,
+        "agent_exit_code": None,
         "public_tests_passed": True,
         "hidden_tests_passed": False,
         "error_type": "hidden_tests_failed",
     }
+
+
+def test_run_suite_with_agent_records_agent_results(tmp_path, monkeypatch, capsys):
+    _make_suite_task(tmp_path, "task-pass", hidden_test_command="exit 0")
+    _make_suite_task(tmp_path, "task-hidden-fail", hidden_test_command="exit 1")
+    monkeypatch.setenv("AGENTGYM_ROOT", str(tmp_path))
+
+    exit_code = main(["run-suite", "--agent", "true"])
+    captured = capsys.readouterr()
+
+    assert exit_code == 1
+    assert "id                agent  public  hidden  status" in captured.out
+    assert "task-pass         pass   pass    pass    pass" in captured.out
+    assert "task-hidden-fail  pass   pass    fail    fail" in captured.out
+    assert "2/2 agent commands passed" in captured.out
+    assert "2/2 tasks passed public tests" in captured.out
+    assert "1/2 tasks passed hidden tests" in captured.out
+    assert "Failure modes:" in captured.out
+    assert "test-failure-mode  task-pass         pass   pass    pass    pass" in captured.out
+    assert "test-failure-mode  task-hidden-fail  pass   pass    fail    fail" in captured.out
+
+    suite_data = _read_suite_result(captured.out)
+    assert suite_data["agent_command"] == "true"
+    assert suite_data["agent_ran"] is True
+    assert suite_data["agent_commands_passed"] == 2
+    assert suite_data["tasks"][0]["agent_command"] == "true"
+    assert suite_data["tasks"][0]["agent_ran"] is True
+    assert suite_data["tasks"][0]["agent_exit_code"] == 0
+    failure_modes_by_task = {item["task_id"]: item for item in suite_data["failure_modes"]}
+    assert failure_modes_by_task["task-pass"]["agent_command"] == "true"
+    assert failure_modes_by_task["task-pass"]["agent_ran"] is True
+    assert failure_modes_by_task["task-pass"]["agent_exit_code"] == 0
+
+
+def test_run_suite_with_failing_agent_continues_and_skips_tests(tmp_path, monkeypatch, capsys):
+    _make_suite_task(tmp_path, "task-one")
+    _make_suite_task(tmp_path, "task-two")
+    monkeypatch.setenv("AGENTGYM_ROOT", str(tmp_path))
+
+    exit_code = main(["run-suite", "--agent", "exit 9"])
+    captured = capsys.readouterr()
+
+    assert exit_code == 1
+    assert "id        agent  public   hidden   status" in captured.out
+    assert "task-one  fail   not run  not run  fail" in captured.out
+    assert "task-two  fail   not run  not run  fail" in captured.out
+    assert "0/2 agent commands passed" in captured.out
+    assert "0/2 tasks passed public tests" in captured.out
+    assert "0/2 tasks passed hidden tests" in captured.out
+    assert "test-failure-mode  task-one  fail   not run  not run  fail" in captured.out
+    assert "test-failure-mode  task-two  fail   not run  not run  fail" in captured.out
+
+    suite_data = _read_suite_result(captured.out)
+    assert suite_data["agent_command"] == "exit 9"
+    assert suite_data["agent_ran"] is True
+    assert suite_data["agent_commands_passed"] == 0
+    for task_result in suite_data["tasks"]:
+        assert task_result["agent_command"] == "exit 9"
+        assert task_result["agent_ran"] is True
+        assert task_result["agent_exit_code"] == 9
+        assert task_result["public_tests_passed"] is None
+        assert task_result["hidden_tests_passed"] is None
+        assert task_result["error_type"] == "agent_failed"
+    for failure_mode_result in suite_data["failure_modes"]:
+        assert failure_mode_result["agent_command"] == "exit 9"
+        assert failure_mode_result["agent_ran"] is True
+        assert failure_mode_result["agent_exit_code"] == 9
+        assert failure_mode_result["public_tests_passed"] is None
+        assert failure_mode_result["hidden_tests_passed"] is None
+        assert failure_mode_result["error_type"] == "agent_failed"
 
 
 def test_run_suite_rejects_invalid_tasks(tmp_path, monkeypatch, capsys):
@@ -225,6 +307,11 @@ timeout_seconds: 60
 
 def _output_value(output: str, prefix: str) -> str:
     return next(line.removeprefix(prefix) for line in output.splitlines() if line.startswith(prefix))
+
+
+def _read_suite_result(output: str) -> dict:
+    suite_result_path = _output_value(output, "Suite result: ")
+    return json.loads(Path(suite_result_path).read_text(encoding="utf-8"))
 
 
 def _snapshot_files(path: Path) -> dict[str, str]:

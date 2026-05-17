@@ -24,7 +24,8 @@ def main(argv: list[str] | None = None) -> int:
     run_parser.add_argument("task_id")
     run_parser.add_argument("--agent", help="Run an agent command in the task workspace before scoring.")
 
-    subparsers.add_parser("run-suite", help="Run every discovered task.")
+    run_suite_parser = subparsers.add_parser("run-suite", help="Run every discovered task.")
+    run_suite_parser.add_argument("--agent", help="Run an agent command in each task workspace before scoring.")
 
     args = parser.parse_args(argv)
 
@@ -35,7 +36,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "run":
         return _run_task(args.task_id, args.agent)
     if args.command == "run-suite":
-        return _run_suite()
+        return _run_suite(args.agent)
 
     parser.error(f"unknown command: {args.command}")
     return 2
@@ -124,7 +125,7 @@ def _run_task(task_id: str, agent_command: str | None = None) -> int:
     return 0 if result.status == "pass" else 1
 
 
-def _run_suite() -> int:
+def _run_suite(agent_command: str | None = None) -> int:
     tasks = discover_tasks()
     if not tasks:
         print("No tasks found.", file=sys.stderr)
@@ -141,38 +142,38 @@ def _run_suite() -> int:
 
     suite_dir = Path(tempfile.mkdtemp(prefix="agentgym-suite-"))
     suite_result_path = suite_dir / "suite_result.json"
-    rows = [("id", "public", "hidden", "status")]
-    failure_mode_rows = [("failure_mode", "task", "public", "hidden", "status")]
+    include_agent = agent_command is not None
+    rows = [("id", "agent", "public", "hidden", "status")] if include_agent else [("id", "public", "hidden", "status")]
+    failure_mode_rows = (
+        [("failure_mode", "task", "agent", "public", "hidden", "status")]
+        if include_agent
+        else [("failure_mode", "task", "public", "hidden", "status")]
+    )
     task_results = []
     failure_mode_results = []
 
     for task in tasks:
-        result = run_task(task)
+        result = run_task(task, agent_command=agent_command)
         primary_failure_mode = str(task.metadata["primary_failure_mode"])
+        agent_status = _format_agent_status(result)
         public_status = _format_test_status(result.public_tests_passed)
         hidden_status = _format_test_status(result.hidden_tests_passed)
-        rows.append(
-            (
-                task.id,
-                public_status,
-                hidden_status,
-                result.status,
+        if include_agent:
+            rows.append((task.id, agent_status, public_status, hidden_status, result.status))
+            failure_mode_rows.append(
+                (primary_failure_mode, task.id, agent_status, public_status, hidden_status, result.status)
             )
-        )
-        failure_mode_rows.append(
-            (
-                primary_failure_mode,
-                task.id,
-                public_status,
-                hidden_status,
-                result.status,
-            )
-        )
+        else:
+            rows.append((task.id, public_status, hidden_status, result.status))
+            failure_mode_rows.append((primary_failure_mode, task.id, public_status, hidden_status, result.status))
         task_results.append(
             {
                 "task_id": task.id,
                 "primary_failure_mode": primary_failure_mode,
                 "status": result.status,
+                "agent_command": result.agent_command,
+                "agent_ran": result.agent_ran,
+                "agent_exit_code": result.agent_exit_code,
                 "public_tests_passed": result.public_tests_passed,
                 "hidden_tests_passed": result.hidden_tests_passed,
                 "result_path": str(result.result_path),
@@ -186,6 +187,9 @@ def _run_suite() -> int:
                 "failure_mode": primary_failure_mode,
                 "task_id": task.id,
                 "status": result.status,
+                "agent_command": result.agent_command,
+                "agent_ran": result.agent_ran,
+                "agent_exit_code": result.agent_exit_code,
                 "public_tests_passed": result.public_tests_passed,
                 "hidden_tests_passed": result.hidden_tests_passed,
                 "error_type": result.error_type,
@@ -196,8 +200,15 @@ def _run_suite() -> int:
 
     public_pass_count = sum(1 for result in task_results if result["public_tests_passed"] is True)
     hidden_pass_count = sum(1 for result in task_results if result["hidden_tests_passed"] is True)
+    agent_pass_count = (
+        sum(1 for result in task_results if result["agent_ran"] is True and result["agent_exit_code"] == 0)
+        if include_agent
+        else None
+    )
     total_count = len(task_results)
     print()
+    if agent_pass_count is not None:
+        print(f"{agent_pass_count}/{total_count} agent commands passed")
     print(f"{public_pass_count}/{total_count} tasks passed public tests")
     print(f"{hidden_pass_count}/{total_count} tasks passed hidden tests")
     print()
@@ -208,6 +219,9 @@ def _run_suite() -> int:
     suite_data = {
         "generated_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
         "total_tasks": total_count,
+        "agent_command": agent_command,
+        "agent_ran": include_agent,
+        "agent_commands_passed": agent_pass_count,
         "public_tests_passed": public_pass_count,
         "hidden_tests_passed": hidden_pass_count,
         "tasks": task_results,

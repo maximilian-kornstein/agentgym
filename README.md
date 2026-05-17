@@ -75,6 +75,14 @@ Run every task:
 agentgym run-suite
 ```
 
+Run every task with the same agent command:
+
+```bash
+agentgym run-suite --agent "<command>"
+```
+
+The command runs once per copied task workspace. If it fails on one task, the suite records that task failure and continues evaluating the rest.
+
 If your shell cannot find the `agentgym` command after installation, use the module form:
 
 ```bash
@@ -84,6 +92,7 @@ python3 -m agentgym.cli validate python-api-001
 python3 -m agentgym.cli run python-api-001
 python3 -m agentgym.cli run python-api-001 --agent "<command>"
 python3 -m agentgym.cli run-suite
+python3 -m agentgym.cli run-suite --agent "<command>"
 ```
 
 Run AgentGym's package tests:
@@ -101,8 +110,9 @@ python3 -m pytest
 - `agentgym run <task_id>` copies the task into a temporary workspace, runs setup and scoring there, captures logs, and leaves the source task untouched.
 - `agentgym run <task_id> --agent "<command>"` runs a trusted local command inside the copied task workspace before public and hidden tests.
 - `agentgym run-suite` runs every task and writes a suite-level JSON summary.
+- `agentgym run-suite --agent "<command>"` runs the same trusted local command once per copied task workspace and records agent/public/hidden results.
 
-AgentGym can optionally run a trusted local agent command for one task at a time. It does not include Docker isolation, a model registry, or suite-level agent execution yet.
+AgentGym can optionally run a trusted local agent command for a single task or across the suite. It does not include Docker isolation, a model registry, or a leaderboard yet.
 
 ## Manual Task Verification
 
