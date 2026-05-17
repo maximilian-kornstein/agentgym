@@ -61,6 +61,14 @@ agentgym run python-api-001 --agent "<command>"
 
 The agent command runs inside the copied task workspace after setup and before scoring. It does not run in, or mutate, the source task directory.
 
+For a concrete smoke test, run the reference patch as the agent command:
+
+```bash
+agentgym run python-api-001 --agent "patch -p0 < solution.patch"
+```
+
+This applies the patch only inside the temporary workspace. The source task remains unchanged, and both public and hidden tests should pass.
+
 Run every task:
 
 ```bash

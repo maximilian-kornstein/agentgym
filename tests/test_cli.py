@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 from agentgym.cli import main
 from tests.test_tasks import _make_task
@@ -108,6 +109,32 @@ def test_run_command_with_failing_agent_stops_before_tests(tmp_path, monkeypatch
     assert "Error: agent_failed" in captured.out
 
 
+def test_run_command_with_reference_patch_agent_passes_real_task(capsys):
+    source_task_dir = Path("tasks/python-api-001")
+    source_snapshot = _snapshot_files(source_task_dir / "repo")
+
+    exit_code = main(["run", "python-api-001", "--agent", "patch -p0 < solution.patch"])
+    captured = capsys.readouterr()
+
+    assert exit_code == 0
+    assert "Task: python-api-001" in captured.out
+    assert "Status: pass" in captured.out
+    assert "Agent: pass" in captured.out
+    assert "Public tests: pass" in captured.out
+    assert "Hidden tests: pass" in captured.out
+
+    result_path = _output_value(captured.out, "Result: ")
+    result_data = json.loads(Path(result_path).read_text(encoding="utf-8"))
+    assert result_data["agent_command"] == "patch -p0 < solution.patch"
+    assert result_data["agent_exit_code"] == 0
+    assert result_data["agent_ran"] is True
+    assert result_data["public_tests_passed"] is True
+    assert result_data["hidden_tests_passed"] is True
+
+    assert _snapshot_files(source_task_dir / "repo") == source_snapshot
+    assert not (source_task_dir / ".agentgym").exists()
+
+
 def test_run_suite_runs_all_tasks_and_writes_suite_result(tmp_path, monkeypatch, capsys):
     _make_suite_task(tmp_path, "task-pass", hidden_test_command="exit 0")
     _make_suite_task(tmp_path, "task-hidden-fail", hidden_test_command="exit 1")
@@ -190,3 +217,15 @@ timeout_seconds: 60
         encoding="utf-8",
     )
     return task_dir
+
+
+def _output_value(output: str, prefix: str) -> str:
+    return next(line.removeprefix(prefix) for line in output.splitlines() if line.startswith(prefix))
+
+
+def _snapshot_files(path: Path) -> dict[str, str]:
+    return {
+        str(file.relative_to(path)): file.read_text(encoding="utf-8")
+        for file in sorted(path.rglob("*"))
+        if file.is_file()
+    }
