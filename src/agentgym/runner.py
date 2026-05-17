@@ -24,12 +24,15 @@ class RunResult:
     public_exit_code: int | None
     hidden_exit_code: int | None
     score_exit_code: int | None
+    agent_command: str | None
+    agent_exit_code: int | None
+    agent_ran: bool
     public_tests_passed: bool | None
     hidden_tests_passed: bool | None
     error_type: str | None
 
 
-def run_task(task: Task) -> RunResult:
+def run_task(task: Task, *, agent_command: str | None = None) -> RunResult:
     run_id = f"{task.id}-{datetime.now(UTC).strftime('%Y%m%dT%H%M%SZ')}-{uuid.uuid4().hex[:8]}"
     run_root = Path(tempfile.mkdtemp(prefix=f"agentgym-{task.id}-"))
     run_workspace = run_root / task.id
@@ -52,6 +55,7 @@ def run_task(task: Task) -> RunResult:
 
     public_result: subprocess.CompletedProcess[str] | _TimeoutResult | None = None
     hidden_result: subprocess.CompletedProcess[str] | _TimeoutResult | None = None
+    agent_result: subprocess.CompletedProcess[str] | _TimeoutResult | None = None
     error_type: str | None = None
     status = "fail"
 
@@ -59,25 +63,36 @@ def run_task(task: Task) -> RunResult:
         error_type = "setup_timeout" if isinstance(setup_result, _TimeoutResult) else "setup_failed"
     else:
         _ensure_workspace_venv_link(run_workspace)
-        public_result = _run_command(
-            command=str(task.metadata["public_test_command"]),
-            cwd=run_workspace,
-            timeout_seconds=timeout_seconds,
-            log_path=logs_dir / "public.log",
-        )
-        if _exit_code(public_result) != 0:
-            error_type = "public_tests_timeout" if isinstance(public_result, _TimeoutResult) else "public_tests_failed"
-        else:
-            hidden_result = _run_command(
-                command=str(task.metadata["hidden_test_command"]),
+        if agent_command is not None:
+            agent_result = _run_command(
+                command=agent_command,
                 cwd=run_workspace,
                 timeout_seconds=timeout_seconds,
-                log_path=logs_dir / "hidden.log",
+                log_path=logs_dir / "agent.log",
             )
-            if _exit_code(hidden_result) == 0:
-                status = "pass"
+            if _exit_code(agent_result) != 0:
+                error_type = "agent_timeout" if isinstance(agent_result, _TimeoutResult) else "agent_failed"
+
+        if error_type is None:
+            public_result = _run_command(
+                command=str(task.metadata["public_test_command"]),
+                cwd=run_workspace,
+                timeout_seconds=timeout_seconds,
+                log_path=logs_dir / "public.log",
+            )
+            if _exit_code(public_result) != 0:
+                error_type = "public_tests_timeout" if isinstance(public_result, _TimeoutResult) else "public_tests_failed"
             else:
-                error_type = "hidden_tests_timeout" if isinstance(hidden_result, _TimeoutResult) else "hidden_tests_failed"
+                hidden_result = _run_command(
+                    command=str(task.metadata["hidden_test_command"]),
+                    cwd=run_workspace,
+                    timeout_seconds=timeout_seconds,
+                    log_path=logs_dir / "hidden.log",
+                )
+                if _exit_code(hidden_result) == 0:
+                    status = "pass"
+                else:
+                    error_type = "hidden_tests_timeout" if isinstance(hidden_result, _TimeoutResult) else "hidden_tests_failed"
 
     completed_at = datetime.now(UTC)
     public_exit_code = _exit_code(public_result)
@@ -91,6 +106,9 @@ def run_task(task: Task) -> RunResult:
         "duration_seconds": round(monotonic() - started_clock, 3),
         "status": status,
         "setup_exit_code": _exit_code(setup_result),
+        "agent_command": agent_command,
+        "agent_exit_code": _exit_code(agent_result),
+        "agent_ran": agent_result is not None,
         "public_exit_code": public_exit_code,
         "hidden_exit_code": hidden_exit_code,
         "score_exit_code": hidden_exit_code,
@@ -108,6 +126,9 @@ def run_task(task: Task) -> RunResult:
         logs_path=logs_dir,
         run_workspace=run_workspace,
         setup_exit_code=_exit_code(setup_result),
+        agent_command=agent_command,
+        agent_exit_code=_exit_code(agent_result),
+        agent_ran=agent_result is not None,
         public_exit_code=public_exit_code,
         hidden_exit_code=hidden_exit_code,
         score_exit_code=hidden_exit_code,

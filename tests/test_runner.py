@@ -17,8 +17,14 @@ def test_run_task_stops_when_setup_fails(tmp_path):
     assert result.hidden_exit_code is None
     assert result.public_tests_passed is None
     assert result.hidden_tests_passed is None
+    assert result.agent_command is None
+    assert result.agent_exit_code is None
+    assert result.agent_ran is False
     assert result.error_type == "setup_failed"
     assert data["error_type"] == "setup_failed"
+    assert data["agent_command"] is None
+    assert data["agent_exit_code"] is None
+    assert data["agent_ran"] is False
 
 
 def test_run_task_stops_when_public_tests_fail(tmp_path):
@@ -72,12 +78,81 @@ def test_run_task_passes_when_setup_public_and_hidden_pass(tmp_path):
     assert data["status"] == "pass"
 
 
+def test_run_task_runs_agent_before_public_and_hidden_tests(tmp_path):
+    task = _make_runner_task(
+        tmp_path,
+        public_test_command="test -f agent-output.txt",
+    )
+
+    result = run_task(task, agent_command="touch agent-output.txt")
+    data = _read_result(result.result_path)
+
+    assert result.status == "pass"
+    assert result.agent_command == "touch agent-output.txt"
+    assert result.agent_exit_code == 0
+    assert result.agent_ran is True
+    assert result.public_tests_passed is True
+    assert result.hidden_tests_passed is True
+    assert (result.logs_path / "agent.log").exists()
+    assert data["agent_command"] == "touch agent-output.txt"
+    assert data["agent_exit_code"] == 0
+    assert data["agent_ran"] is True
+
+
+def test_run_task_stops_when_agent_fails(tmp_path):
+    task = _make_runner_task(
+        tmp_path,
+        public_test_command="touch public-ran",
+        hidden_test_command="touch hidden-ran",
+    )
+
+    result = run_task(task, agent_command="exit 9")
+    data = _read_result(result.result_path)
+
+    assert result.status == "fail"
+    assert result.agent_exit_code == 9
+    assert result.agent_ran is True
+    assert result.public_exit_code is None
+    assert result.hidden_exit_code is None
+    assert result.public_tests_passed is None
+    assert result.hidden_tests_passed is None
+    assert result.error_type == "agent_failed"
+    assert not (result.run_workspace / "public-ran").exists()
+    assert not (result.run_workspace / "hidden-ran").exists()
+    assert data["agent_command"] == "exit 9"
+    assert data["agent_exit_code"] == 9
+    assert data["agent_ran"] is True
+    assert data["error_type"] == "agent_failed"
+
+
+def test_run_task_stops_when_agent_times_out(tmp_path):
+    task = _make_runner_task(
+        tmp_path,
+        timeout_seconds=1,
+        public_test_command="touch public-ran",
+    )
+
+    result = run_task(task, agent_command="sleep 2")
+    data = _read_result(result.result_path)
+
+    assert result.status == "fail"
+    assert result.agent_exit_code == 124
+    assert result.agent_ran is True
+    assert result.public_exit_code is None
+    assert result.hidden_exit_code is None
+    assert result.error_type == "agent_timeout"
+    assert not (result.run_workspace / "public-ran").exists()
+    assert data["agent_exit_code"] == 124
+    assert data["error_type"] == "agent_timeout"
+
+
 def _make_runner_task(
     root: Path,
     *,
     setup_command: str = "exit 0",
     public_test_command: str = "exit 0",
     hidden_test_command: str = "exit 0",
+    timeout_seconds: int = 10,
 ) -> Task:
     task_dir = root / "runner-task"
     task_dir.mkdir()
@@ -92,7 +167,7 @@ def _make_runner_task(
         "public_test_command": public_test_command,
         "hidden_test_command": hidden_test_command,
         "score_command": "exit 0",
-        "timeout_seconds": 10,
+        "timeout_seconds": timeout_seconds,
     }
     return Task(
         id="runner-task",

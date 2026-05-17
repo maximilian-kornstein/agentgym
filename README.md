@@ -53,6 +53,14 @@ agentgym run python-api-001
 
 This run is expected to fail. The starter code passes public tests but fails hidden tests, which is the point of the golden task. The CLI prints the temporary run workspace and writes `.agentgym/result.json` inside that workspace.
 
+Run a task with an agent command:
+
+```bash
+agentgym run python-api-001 --agent "<command>"
+```
+
+The agent command runs inside the copied task workspace after setup and before scoring. It does not run in, or mutate, the source task directory.
+
 Run every task:
 
 ```bash
@@ -66,6 +74,7 @@ python3 -m agentgym.cli list
 python3 -m agentgym.cli validate
 python3 -m agentgym.cli validate python-api-001
 python3 -m agentgym.cli run python-api-001
+python3 -m agentgym.cli run python-api-001 --agent "<command>"
 python3 -m agentgym.cli run-suite
 ```
 
@@ -82,9 +91,10 @@ python3 -m pytest
 - `agentgym validate` checks metadata and required files for every task.
 - `agentgym validate <task_id>` checks metadata and required files for one task.
 - `agentgym run <task_id>` copies the task into a temporary workspace, runs setup and scoring there, captures logs, and leaves the source task untouched.
+- `agentgym run <task_id> --agent "<command>"` runs a trusted local command inside the copied task workspace before public and hidden tests.
 - `agentgym run-suite` runs every task and writes a suite-level JSON summary.
 
-AgentGym does not invoke coding agents yet. For now, it proves the task format and scoring loop.
+AgentGym can optionally run a trusted local agent command for one task at a time. It does not include Docker isolation, a model registry, or suite-level agent execution yet.
 
 ## Manual Task Verification
 

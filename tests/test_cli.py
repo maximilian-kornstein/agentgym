@@ -77,6 +77,37 @@ def test_run_command_prints_public_and_hidden_test_summary(capsys):
     assert "Error: hidden_tests_failed" in captured.out
 
 
+def test_run_command_with_agent_prints_agent_pass(tmp_path, monkeypatch, capsys):
+    _make_suite_task(tmp_path, "agent-task")
+    monkeypatch.setenv("AGENTGYM_ROOT", str(tmp_path))
+
+    exit_code = main(["run", "agent-task", "--agent", "true"])
+    captured = capsys.readouterr()
+
+    assert exit_code == 0
+    assert "Task: agent-task" in captured.out
+    assert "Status: pass" in captured.out
+    assert "Agent: pass" in captured.out
+    assert "Public tests: pass" in captured.out
+    assert "Hidden tests: pass" in captured.out
+
+
+def test_run_command_with_failing_agent_stops_before_tests(tmp_path, monkeypatch, capsys):
+    _make_suite_task(tmp_path, "agent-fail-task")
+    monkeypatch.setenv("AGENTGYM_ROOT", str(tmp_path))
+
+    exit_code = main(["run", "agent-fail-task", "--agent", "exit 9"])
+    captured = capsys.readouterr()
+
+    assert exit_code == 1
+    assert "Task: agent-fail-task" in captured.out
+    assert "Status: fail" in captured.out
+    assert "Agent: fail" in captured.out
+    assert "Public tests: not run" in captured.out
+    assert "Hidden tests: not run" in captured.out
+    assert "Error: agent_failed" in captured.out
+
+
 def test_run_suite_runs_all_tasks_and_writes_suite_result(tmp_path, monkeypatch, capsys):
     _make_suite_task(tmp_path, "task-pass", hidden_test_command="exit 0")
     _make_suite_task(tmp_path, "task-hidden-fail", hidden_test_command="exit 1")

@@ -22,6 +22,7 @@ def main(argv: list[str] | None = None) -> int:
 
     run_parser = subparsers.add_parser("run", help="Run a task in a temporary workspace.")
     run_parser.add_argument("task_id")
+    run_parser.add_argument("--agent", help="Run an agent command in the task workspace before scoring.")
 
     subparsers.add_parser("run-suite", help="Run every discovered task.")
 
@@ -32,7 +33,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "validate":
         return _validate_task(args.task_id)
     if args.command == "run":
-        return _run_task(args.task_id)
+        return _run_task(args.task_id, args.agent)
     if args.command == "run-suite":
         return _run_suite()
 
@@ -97,7 +98,7 @@ def _validate_all_tasks() -> int:
     return 0
 
 
-def _run_task(task_id: str) -> int:
+def _run_task(task_id: str, agent_command: str | None = None) -> int:
     task, errors = validate_task_id(task_id)
     if task is None or errors:
         if task is not None:
@@ -106,9 +107,11 @@ def _run_task(task_id: str) -> int:
             print(f"- {error}", file=sys.stderr)
         return 2
 
-    result = run_task(task)
+    result = run_task(task, agent_command=agent_command)
     print(f"Task: {task_id}")
     print(f"Status: {result.status}")
+    if result.agent_command is not None:
+        print(f"Agent: {_format_agent_status(result)}")
     print(f"Public tests: {_format_test_status(result.public_tests_passed)}")
     print(f"Hidden tests: {_format_test_status(result.hidden_tests_passed)}")
     print(f"Run workspace: {result.run_workspace}")
@@ -225,6 +228,12 @@ def _format_test_status(value: bool | None) -> str:
     if value is None:
         return "not run"
     return "pass" if value else "fail"
+
+
+def _format_agent_status(result) -> str:
+    if not result.agent_ran:
+        return "not run"
+    return "pass" if result.agent_exit_code == 0 else "fail"
 
 
 if __name__ == "__main__":
