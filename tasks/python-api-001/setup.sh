@@ -8,6 +8,7 @@ VENV_ROOT="${TMPDIR:-/tmp}/agentgym-venvs"
 VENV_PATH="$VENV_ROOT/python-api-001"
 
 mkdir -p "$VENV_ROOT"
+rm -rf "$VENV_PATH"
 python3 -m venv "$VENV_PATH"
 rm -f .venv
 ln -s "$VENV_PATH" .venv
