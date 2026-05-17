@@ -13,6 +13,7 @@ AgentGym tasks are small on purpose. Each task isolates one way a coding agent c
 | `python-api-005` | Missing pagination boundary validation | Checks that invalid limits, offsets, numeric strings, blank queries, and unsupported sort values are rejected. |
 | `python-api-006` | Partial update semantics confusion | Checks that omitted fields, explicit nulls, empty updates, unknown fields, and boolean coercion are handled correctly. |
 | `python-api-007` | Idempotency-key handling | Checks that duplicate payment requests do not overwrite state, double-process, or accept conflicting payloads. |
+| `python-api-008` | Config precedence | Checks that layered config sources use the correct precedence and reject invalid overrides instead of falling back. |
 
 ## `python-api-001`: Whitespace-Only Required Fields
 
@@ -55,6 +56,12 @@ The intended lesson: partial update APIs need clear omitted-vs-null semantics an
 This task catches agents that validate a request but miss the state semantics around duplicate idempotency keys. A shallow implementation can process normal payments while overwriting stored responses, double-processing duplicate requests, or mutating state before rejecting invalid input.
 
 The intended lesson: stateful API handlers need validation-before-mutation and explicit duplicate-request behavior.
+
+## `python-api-008`: Config Precedence
+
+This task catches agents that merge layered configuration sources in the wrong order or treat invalid high-precedence values as fallback opportunities. A shallow implementation can pass ordinary precedence examples while accepting unknown keys, coercing booleans, mutating inputs, or silently falling back to lower-precedence values.
+
+The intended lesson: configuration builders need explicit precedence, strict validation, and no mutation of caller-owned config layers.
 
 ## Why These Are Useful
 

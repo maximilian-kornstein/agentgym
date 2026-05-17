@@ -1,0 +1,35 @@
+id: python-api-008
+title: Enforce service config precedence
+language: python
+domain: api-configuration
+difficulty: easy
+estimated_human_minutes: 25
+primary_failure_mode: config-precedence
+tags:
+  - api
+  - configuration
+  - precedence
+  - validation
+description: >
+  Fix a service configuration builder so layered config sources are merged with
+  the correct precedence and invalid higher-precedence values are rejected.
+  Public tests cover normal precedence, while hidden tests catch fallback,
+  coercion, unknown keys, and mutation bugs.
+setup_command: ./setup.sh
+public_test_command: .venv/bin/python -m pytest tests
+hidden_test_command: .venv/bin/python -m pytest hidden_tests
+score_command: ./score.sh
+timeout_seconds: 60
+allowed_tools:
+  - shell
+  - editor
+  - pytest
+failure_modes:
+  - passed-public-failed-hidden
+  - config-precedence
+  - fallback-on-invalid-configuration
+  - input-mutation
+  - over-permissive-type-coercion
+  - hardcoded-test-behavior
+  - syntax-error
+  - dependency-setup-failure

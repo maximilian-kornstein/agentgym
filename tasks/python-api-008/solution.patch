@@ -1,0 +1,44 @@
+--- repo/src/service_config_api/config.py
++++ repo/src/service_config_api/config.py
+@@ -18,16 +18,15 @@
+     request_config: dict[str, Any],
+ ) -> dict[str, Any]:
+     """Build effective service config from layered inputs."""
+-    effective = defaults
++    effective = dict(defaults)
+ 
+-    for layer in (file_config, env_config, request_config):
++    for layer in (defaults, file_config, env_config, request_config):
++        unknown_keys = set(layer) - SUPPORTED_KEYS
++        if unknown_keys:
++            key = sorted(unknown_keys)[0]
++            raise ConfigValidationError(f"unknown config key: {key}")
+         for key, value in layer.items():
+-            if key not in SUPPORTED_KEYS:
+-                continue
+-            try:
+-                effective[key] = _validate_value(key, value)
+-            except ConfigValidationError:
+-                continue
++            effective[key] = _validate_value(key, value)
+ 
+     return _validate_config(effective)
+ 
+@@ -50,7 +49,7 @@
+         return value
+ 
+     if key == "max_retries":
+-        if not isinstance(value, int):
++        if not isinstance(value, int) or isinstance(value, bool):
+             raise ConfigValidationError("max_retries must be an integer")
+         if value < 0 or value > 5:
+             raise ConfigValidationError("max_retries must be between 0 and 5")
+@@ -65,8 +64,6 @@
+         return value
+ 
+     if key == "debug":
+-        if isinstance(value, str):
+-            return bool(value)
+         if not isinstance(value, bool):
+             raise ConfigValidationError("debug must be a boolean")
+         return value
