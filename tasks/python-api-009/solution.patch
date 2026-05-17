@@ -1,0 +1,13 @@
+--- repo/src/booking_window_api/windows.py
++++ repo/src/booking_window_api/windows.py
+@@ -21 +21 @@
+-    if _wall_clock(end_at) < _wall_clock(start_at):
++    if end_at.astimezone(timezone.utc) <= start_at.astimezone(timezone.utc):
+@@ -40 +40 @@
+-        parsed = parsed.replace(tzinfo=timezone.utc)
++        raise BookingWindowValidationError(f"{field_name} must include a timezone offset")
+@@ -45,4 +44,0 @@
+-def _wall_clock(value: datetime) -> datetime:
+-    return value.replace(tzinfo=None)
+-
+-

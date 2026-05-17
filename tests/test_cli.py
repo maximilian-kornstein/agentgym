@@ -22,6 +22,7 @@ def test_list_command_prints_table_with_all_current_tasks(capsys):
     assert "python-api-006" in captured.out
     assert "python-api-007" in captured.out
     assert "python-api-008" in captured.out
+    assert "python-api-009" in captured.out
     assert "Reject whitespace-only profile fields" in captured.out
 
 
@@ -46,7 +47,8 @@ def test_validate_command_without_task_id_validates_all_tasks(capsys):
     assert "python-api-006: valid" in captured.out
     assert "python-api-007: valid" in captured.out
     assert "python-api-008: valid" in captured.out
-    assert "8 tasks valid" in captured.out
+    assert "python-api-009: valid" in captured.out
+    assert "9 tasks valid" in captured.out
 
 
 def test_validate_all_exits_nonzero_when_any_task_is_invalid(tmp_path, monkeypatch, capsys):

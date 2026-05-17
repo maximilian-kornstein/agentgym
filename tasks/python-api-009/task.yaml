@@ -1,0 +1,35 @@
+id: python-api-009
+title: Validate timezone-aware booking windows
+language: python
+domain: api-datetime-validation
+difficulty: easy
+estimated_human_minutes: 25
+primary_failure_mode: datetime-boundary-validation
+tags:
+  - api
+  - datetime
+  - validation
+  - timezone
+description: >
+  Fix a booking-window payload builder so it rejects naive timestamps, compares
+  start and end times by their true UTC instants, and normalizes accepted
+  datetimes to UTC. Public tests cover ordinary ISO inputs, while hidden tests
+  catch naive timestamps, equal windows, UTC boundary errors, and mutation bugs.
+setup_command: ./setup.sh
+public_test_command: .venv/bin/python -m pytest tests
+hidden_test_command: .venv/bin/python -m pytest hidden_tests
+score_command: ./score.sh
+timeout_seconds: 60
+allowed_tools:
+  - shell
+  - editor
+  - pytest
+failure_modes:
+  - passed-public-failed-hidden
+  - datetime-boundary-validation
+  - naive-datetime-acceptance
+  - utc-normalization-error
+  - boundary-ordering-error
+  - hardcoded-test-behavior
+  - syntax-error
+  - dependency-setup-failure

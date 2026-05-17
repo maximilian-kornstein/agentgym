@@ -14,6 +14,7 @@ AgentGym tasks are small on purpose. Each task isolates one way a coding agent c
 | `python-api-006` | Partial update semantics confusion | Checks that omitted fields, explicit nulls, empty updates, unknown fields, and boolean coercion are handled correctly. |
 | `python-api-007` | Idempotency-key handling | Checks that duplicate payment requests do not overwrite state, double-process, or accept conflicting payloads. |
 | `python-api-008` | Config precedence | Checks that layered config sources use the correct precedence and reject invalid overrides instead of falling back. |
+| `python-api-009` | Datetime boundary validation | Checks that timezone-aware booking windows reject naive timestamps, equal windows, and UTC ordering mistakes. |
 
 ## `python-api-001`: Whitespace-Only Required Fields
 
@@ -62,6 +63,12 @@ The intended lesson: stateful API handlers need validation-before-mutation and e
 This task catches agents that merge layered configuration sources in the wrong order or treat invalid high-precedence values as fallback opportunities. A shallow implementation can pass ordinary precedence examples while accepting unknown keys, coercing booleans, mutating inputs, or silently falling back to lower-precedence values.
 
 The intended lesson: configuration builders need explicit precedence, strict validation, and no mutation of caller-owned config layers.
+
+## `python-api-009`: Datetime Boundary Validation
+
+This task catches agents that parse datetime strings shallowly. A shallow implementation can pass ordinary ISO examples while accepting naive timestamps, allowing equal windows, or comparing offset timestamps by wall-clock time instead of their UTC instants.
+
+The intended lesson: datetime API contracts need explicit timezone requirements, strict boundary checks, and normalization before comparing instants.
 
 ## Why These Are Useful
 
