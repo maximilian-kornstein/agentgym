@@ -6,14 +6,14 @@ The goal is to measure where agents still fail at real software engineering work
 
 ## Current Status
 
-AgentGym v0.1 is intentionally small:
+AgentGym is intentionally small:
 
-- Four Python API tasks: `tasks/python-api-001`, `tasks/python-api-002`, `tasks/python-api-003`, and `tasks/python-api-004`.
+- Five Python API tasks: `tasks/python-api-001`, `tasks/python-api-002`, `tasks/python-api-003`, `tasks/python-api-004`, and `tasks/python-api-005`.
 - A local CLI for discovery, validation, and temporary-workspace execution.
 - Public tests, hidden tests, deterministic scoring, and a reference patch.
 - Authoring docs for creating the next Python API tasks.
 
-The first task is a synthetic Python API bug: a profile payload validator mishandles whitespace-only required fields. The second task checks a nested notification-preferences payload that coerces non-boolean values too permissively. The third task checks a cross-field account/tax-id rule. The fourth task checks response serialization that leaks internal user fields. All four are small enough to inspect quickly, but real enough to demonstrate the benchmark loop.
+The first task is a synthetic Python API bug: a profile payload validator mishandles whitespace-only required fields. The second task checks a nested notification-preferences payload that coerces non-boolean values too permissively. The third task checks a cross-field account/tax-id rule. The fourth task checks response serialization that leaks internal user fields. The fifth task checks search pagination and sort boundary validation. All five are small enough to inspect quickly, but real enough to demonstrate the benchmark loop.
 
 ## Quickstart
 
@@ -128,11 +128,11 @@ solution.patch
 - `score.sh` runs public and hidden tests.
 - `solution.patch` is the reference fix used to verify the task.
 
-See `docs/v0.1_report.md` for the current benchmark snapshot. See `docs/methodology.md` for the benchmark method. See `docs/failure_modes.md` for the current failure-mode map. See `docs/task_authoring.md` for the task quality bar and authoring checklist. See `docs/python_api_task_template.md` for the recommended shape of new Python API tasks.
+See `docs/v0.1_report.md` for the dated v0.1 benchmark snapshot. See `docs/methodology.md` for the benchmark method. See `docs/failure_modes.md` for the current failure-mode map. See `docs/task_authoring.md` for the task quality bar and authoring checklist. See `docs/python_api_task_template.md` for the recommended shape of new Python API tasks.
 
 ## Roadmap
 
-1. Add 2-3 more Python API-validation tasks.
+1. Add more Python API-validation tasks.
 2. Publish a short mini-report on early failure modes.
 3. Add result summarization for CLI runs.
 4. Add an agent command hook.
