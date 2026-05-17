@@ -1,0 +1,33 @@
+id: python-api-006
+title: Enforce profile update semantics
+language: python
+domain: api-input-validation
+difficulty: easy
+estimated_human_minutes: 20
+tags:
+  - api
+  - validation
+  - patch
+  - partial-update
+description: >
+  Fix a profile update payload builder so PATCH-style requests distinguish
+  omitted fields from explicit invalid values. Public tests cover ordinary
+  updates, while hidden tests catch empty updates, null handling, unknown
+  fields, and boolean coercion.
+setup_command: ./setup.sh
+public_test_command: .venv/bin/python -m pytest tests
+hidden_test_command: .venv/bin/python -m pytest hidden_tests
+score_command: ./score.sh
+timeout_seconds: 60
+allowed_tools:
+  - shell
+  - editor
+  - pytest
+failure_modes:
+  - passed-public-failed-hidden
+  - omitted-vs-null-confusion
+  - partial-update-contract-violation
+  - over-permissive-type-coercion
+  - hardcoded-test-behavior
+  - syntax-error
+  - dependency-setup-failure

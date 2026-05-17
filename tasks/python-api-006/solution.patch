@@ -1,0 +1,52 @@
+--- repo/src/profile_update_api/updates.py
++++ repo/src/profile_update_api/updates.py
+@@ -12,22 +12,41 @@
+ 
+ def build_profile_update_payload(request_data: Mapping[str, Any]) -> dict[str, Any]:
+     """Build a normalized profile update payload from PATCH-style input."""
++    unknown_fields = set(request_data) - SUPPORTED_FIELDS
++    if unknown_fields:
++        field_name = sorted(unknown_fields)[0]
++        raise ProfileUpdateValidationError(f"unknown field: {field_name}")
++
+     payload: dict[str, Any] = {}
+ 
+-    display_name = request_data.get("display_name")
+-    if display_name is not None:
++    if "display_name" in request_data:
++        display_name = request_data["display_name"]
++        if display_name is None:
++            raise ProfileUpdateValidationError("display_name cannot be null")
+         if not isinstance(display_name, str):
+             raise ProfileUpdateValidationError("display_name must be a string")
+-        payload["display_name"] = display_name.strip()
++        display_name = display_name.strip()
++        if display_name == "":
++            raise ProfileUpdateValidationError("display_name cannot be blank")
++        payload["display_name"] = display_name
+ 
+-    bio = request_data.get("bio")
+-    if bio is not None:
++    if "bio" in request_data:
++        bio = request_data["bio"]
++        if bio is None:
++            raise ProfileUpdateValidationError("bio cannot be null")
+         if not isinstance(bio, str):
+             raise ProfileUpdateValidationError("bio must be a string")
+         payload["bio"] = bio.strip()
+ 
+-    marketing_opt_in = request_data.get("marketing_opt_in")
+-    if marketing_opt_in is not None:
+-        payload["marketing_opt_in"] = bool(marketing_opt_in)
++    if "marketing_opt_in" in request_data:
++        marketing_opt_in = request_data["marketing_opt_in"]
++        if marketing_opt_in is None:
++            raise ProfileUpdateValidationError("marketing_opt_in cannot be null")
++        if not isinstance(marketing_opt_in, bool):
++            raise ProfileUpdateValidationError("marketing_opt_in must be a boolean")
++        payload["marketing_opt_in"] = marketing_opt_in
+ 
++    if not payload:
++        raise ProfileUpdateValidationError("at least one update field is required")
++
+     return payload

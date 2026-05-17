@@ -8,12 +8,12 @@ The goal is to measure where agents still fail at real software engineering work
 
 AgentGym is intentionally small:
 
-- Five Python API tasks: `tasks/python-api-001`, `tasks/python-api-002`, `tasks/python-api-003`, `tasks/python-api-004`, and `tasks/python-api-005`.
+- Six Python API tasks: `tasks/python-api-001`, `tasks/python-api-002`, `tasks/python-api-003`, `tasks/python-api-004`, `tasks/python-api-005`, and `tasks/python-api-006`.
 - A local CLI for discovery, validation, and temporary-workspace execution.
 - Public tests, hidden tests, deterministic scoring, and a reference patch.
 - Authoring docs for creating the next Python API tasks.
 
-The first task is a synthetic Python API bug: a profile payload validator mishandles whitespace-only required fields. The second task checks a nested notification-preferences payload that coerces non-boolean values too permissively. The third task checks a cross-field account/tax-id rule. The fourth task checks response serialization that leaks internal user fields. The fifth task checks search pagination and sort boundary validation. All five are small enough to inspect quickly, but real enough to demonstrate the benchmark loop.
+The first task is a synthetic Python API bug: a profile payload validator mishandles whitespace-only required fields. The second task checks a nested notification-preferences payload that coerces non-boolean values too permissively. The third task checks a cross-field account/tax-id rule. The fourth task checks response serialization that leaks internal user fields. The fifth task checks search pagination and sort boundary validation. The sixth task checks PATCH-style partial update semantics. All six are small enough to inspect quickly, but real enough to demonstrate the benchmark loop.
 
 ## Quickstart
 

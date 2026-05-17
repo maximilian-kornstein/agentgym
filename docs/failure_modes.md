@@ -11,6 +11,7 @@ AgentGym tasks are small on purpose. Each task isolates one way a coding agent c
 | `python-api-003` | Missing cross-field validation | Checks that business accounts require `tax_id` and personal accounts reject it. |
 | `python-api-004` | Internal-field serialization leak | Checks that password hashes, internal notes, admin flags, and other private fields are not returned. |
 | `python-api-005` | Missing pagination boundary validation | Checks that invalid limits, offsets, numeric strings, blank queries, and unsupported sort values are rejected. |
+| `python-api-006` | Partial update semantics confusion | Checks that omitted fields, explicit nulls, empty updates, unknown fields, and boolean coercion are handled correctly. |
 
 ## `python-api-001`: Whitespace-Only Required Fields
 
@@ -41,6 +42,12 @@ The intended lesson: API response builders should allowlist public fields, not c
 This task catches agents that validate only the obvious type shape of a search request while missing numeric boundaries and enum-like sort constraints. A shallow implementation can pass defaults and normal integer values while accepting `limit=0`, negative offsets, numeric strings, blank queries, or unsupported sort values.
 
 The intended lesson: pagination and search parameters need strict boundary checks, not just broad parsing.
+
+## `python-api-006`: Partial Update Semantics
+
+This task catches agents that treat PATCH-style update payloads like ordinary create payloads. A shallow implementation can pass normal updates while skipping explicit `None`, allowing empty updates, ignoring unknown fields, or coercing boolean-like values.
+
+The intended lesson: partial update APIs need clear omitted-vs-null semantics and strict validation for every field that is actually present.
 
 ## Why These Are Useful
 
