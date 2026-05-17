@@ -1,0 +1,35 @@
+id: python-api-010
+title: Enforce document access authorization
+language: python
+domain: api-authorization
+difficulty: easy
+estimated_human_minutes: 25
+primary_failure_mode: authorization-scope-enforcement
+tags:
+  - api
+  - authorization
+  - security
+  - access-control
+description: >
+  Fix a document access payload builder so normal users can access only their
+  own documents while admins can access any document. Public tests cover normal
+  owner and admin behavior, while hidden tests catch missing actor/resource
+  authorization, invalid actors, and mutation bugs.
+setup_command: ./setup.sh
+public_test_command: .venv/bin/python -m pytest tests
+hidden_test_command: .venv/bin/python -m pytest hidden_tests
+score_command: ./score.sh
+timeout_seconds: 60
+allowed_tools:
+  - shell
+  - editor
+  - pytest
+failure_modes:
+  - passed-public-failed-hidden
+  - authorization-scope-enforcement
+  - actor-resource-mismatch
+  - untrusted-request-ownership
+  - input-mutation
+  - hardcoded-test-behavior
+  - syntax-error
+  - dependency-setup-failure

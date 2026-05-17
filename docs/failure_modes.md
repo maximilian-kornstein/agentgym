@@ -15,6 +15,7 @@ AgentGym tasks are small on purpose. Each task isolates one way a coding agent c
 | `python-api-007` | Idempotency-key handling | Checks that duplicate payment requests do not overwrite state, double-process, or accept conflicting payloads. |
 | `python-api-008` | Config precedence | Checks that layered config sources use the correct precedence and reject invalid overrides instead of falling back. |
 | `python-api-009` | Datetime boundary validation | Checks that timezone-aware booking windows reject naive timestamps, equal windows, and UTC ordering mistakes. |
+| `python-api-010` | Authorization scope enforcement | Checks that normal users cannot access documents owned by another actor and that unknown actor roles are rejected. |
 
 ## `python-api-001`: Whitespace-Only Required Fields
 
@@ -69,6 +70,12 @@ The intended lesson: configuration builders need explicit precedence, strict val
 This task catches agents that parse datetime strings shallowly. A shallow implementation can pass ordinary ISO examples while accepting naive timestamps, allowing equal windows, or comparing offset timestamps by wall-clock time instead of their UTC instants.
 
 The intended lesson: datetime API contracts need explicit timezone requirements, strict boundary checks, and normalization before comparing instants.
+
+## `python-api-010`: Authorization Scope Enforcement
+
+This task catches agents that validate request shape but forget to enforce the relationship between the authenticated actor and the protected resource. A shallow implementation can pass owner/admin happy paths while letting ordinary users access another owner's document or accepting unknown roles.
+
+The intended lesson: authorization must be checked against trusted actor context, not only against request-provided fields.
 
 ## Why These Are Useful
 

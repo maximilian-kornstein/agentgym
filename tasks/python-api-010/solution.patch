@@ -1,0 +1,22 @@
+--- repo/src/document_access_api/access.py
++++ repo/src/document_access_api/access.py
+@@ -6,0 +7 @@
++SUPPORTED_ROLES = {"user", "admin"}
+@@ -24,4 +24,0 @@
+-    request_data["document_id"] = document_id
+-    request_data["owner_id"] = owner_id
+-    request_data["action"] = action
+-
+@@ -30 +27,4 @@
+-    actor["role"] = role
++    if role not in SUPPORTED_ROLES:
++        raise DocumentAccessValidationError("actor role is not supported")
++    if role == "user" and actor_user_id != owner_id:
++        raise DocumentAccessValidationError("actor is not authorized for this document")
+@@ -65 +65,5 @@
+-    return value.strip()
++    value = value.strip()
++    if value == "":
++        raise DocumentAccessValidationError(f"actor {field_name} cannot be blank")
++
++    return value

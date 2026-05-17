@@ -8,12 +8,12 @@ The goal is to measure where agents still fail at real software engineering work
 
 AgentGym is intentionally small:
 
-- Nine Python API tasks: `tasks/python-api-001`, `tasks/python-api-002`, `tasks/python-api-003`, `tasks/python-api-004`, `tasks/python-api-005`, `tasks/python-api-006`, `tasks/python-api-007`, `tasks/python-api-008`, and `tasks/python-api-009`.
+- Ten Python API tasks: `tasks/python-api-001`, `tasks/python-api-002`, `tasks/python-api-003`, `tasks/python-api-004`, `tasks/python-api-005`, `tasks/python-api-006`, `tasks/python-api-007`, `tasks/python-api-008`, `tasks/python-api-009`, and `tasks/python-api-010`.
 - A local CLI for discovery, validation, and temporary-workspace execution.
 - Public tests, hidden tests, deterministic scoring, and a reference patch.
 - Authoring docs for creating the next Python API tasks.
 
-The first task is a synthetic Python API bug: a profile payload validator mishandles whitespace-only required fields. The second task checks a nested notification-preferences payload that coerces non-boolean values too permissively. The third task checks a cross-field account/tax-id rule. The fourth task checks response serialization that leaks internal user fields. The fifth task checks search pagination and sort boundary validation. The sixth task checks PATCH-style partial update semantics. The seventh task checks idempotency-key handling for duplicate payment requests. The eighth task checks layered service configuration precedence. The ninth task checks timezone-aware booking-window validation. All nine are small enough to inspect quickly, but real enough to demonstrate the benchmark loop.
+The first task is a synthetic Python API bug: a profile payload validator mishandles whitespace-only required fields. The second task checks a nested notification-preferences payload that coerces non-boolean values too permissively. The third task checks a cross-field account/tax-id rule. The fourth task checks response serialization that leaks internal user fields. The fifth task checks search pagination and sort boundary validation. The sixth task checks PATCH-style partial update semantics. The seventh task checks idempotency-key handling for duplicate payment requests. The eighth task checks layered service configuration precedence. The ninth task checks timezone-aware booking-window validation. The tenth task checks document access authorization scope. All ten are small enough to inspect quickly, but real enough to demonstrate the benchmark loop.
 
 ## Quickstart
 
