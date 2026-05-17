@@ -156,14 +156,13 @@ solution.patch
 - `score.sh` runs public and hidden tests.
 - `solution.patch` is the reference fix used to verify the task.
 
-See `docs/v0.1_report.md` for the dated v0.1 benchmark snapshot. See `docs/methodology.md` for the benchmark method. See `docs/failure_modes.md` for the current failure-mode map. See `docs/task_authoring.md` for the task quality bar and authoring checklist. See `docs/python_api_task_template.md` for the recommended shape of new Python API tasks.
+See `docs/v0.1_report.md` for the dated v0.1 benchmark snapshot and `docs/v0.2_report.md` for the 10-task suite snapshot. See `docs/methodology.md` for the benchmark method. See `docs/failure_modes.md` for the current failure-mode map. See `docs/task_authoring.md` for the task quality bar and authoring checklist. See `docs/python_api_task_template.md` for the recommended shape of new Python API tasks.
 
 ## Roadmap
 
-1. Add more Python API-validation tasks.
-2. Publish a short mini-report on early failure modes.
-3. Add result summarization for CLI runs.
-4. Add an agent command hook.
-5. Expand toward a 10-task Python API mini-benchmark.
+1. Run real coding-agent commands against the 10-task suite.
+2. Add result summarization for suite runs.
+3. Explore private or generated task packs.
+4. Expand beyond Python API tasks after the public format stays stable.
 
 See `AGENTGYM_PRD.md` for the full product plan.
