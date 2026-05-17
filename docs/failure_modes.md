@@ -12,6 +12,7 @@ AgentGym tasks are small on purpose. Each task isolates one way a coding agent c
 | `python-api-004` | Internal-field serialization leak | Checks that password hashes, internal notes, admin flags, and other private fields are not returned. |
 | `python-api-005` | Missing pagination boundary validation | Checks that invalid limits, offsets, numeric strings, blank queries, and unsupported sort values are rejected. |
 | `python-api-006` | Partial update semantics confusion | Checks that omitted fields, explicit nulls, empty updates, unknown fields, and boolean coercion are handled correctly. |
+| `python-api-007` | Idempotency-key handling | Checks that duplicate payment requests do not overwrite state, double-process, or accept conflicting payloads. |
 
 ## `python-api-001`: Whitespace-Only Required Fields
 
@@ -48,6 +49,12 @@ The intended lesson: pagination and search parameters need strict boundary check
 This task catches agents that treat PATCH-style update payloads like ordinary create payloads. A shallow implementation can pass normal updates while skipping explicit `None`, allowing empty updates, ignoring unknown fields, or coercing boolean-like values.
 
 The intended lesson: partial update APIs need clear omitted-vs-null semantics and strict validation for every field that is actually present.
+
+## `python-api-007`: Idempotency-Key Handling
+
+This task catches agents that validate a request but miss the state semantics around duplicate idempotency keys. A shallow implementation can process normal payments while overwriting stored responses, double-processing duplicate requests, or mutating state before rejecting invalid input.
+
+The intended lesson: stateful API handlers need validation-before-mutation and explicit duplicate-request behavior.
 
 ## Why These Are Useful
 

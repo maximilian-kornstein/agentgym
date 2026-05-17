@@ -1,0 +1,27 @@
+--- repo/src/payment_api/payments.py
++++ repo/src/payment_api/payments.py
+@@ -18,8 +18,7 @@
+     request_id = _require_text(request_data, "request_id")
+ 
+     amount_cents = request_data.get("amount_cents")
+-    seen_requests[request_id] = {"amount_cents": amount_cents}
+-    if not isinstance(amount_cents, int):
++    if not isinstance(amount_cents, int) or isinstance(amount_cents, bool):
+         raise PaymentValidationError("amount_cents must be an integer")
+     if amount_cents <= 0:
+         raise PaymentValidationError("amount_cents must be positive")
+@@ -28,6 +27,14 @@
+     if currency not in SUPPORTED_CURRENCIES:
+         raise PaymentValidationError("currency is not supported")
+ 
++    existing = seen_requests.get(request_id)
++    if existing is not None:
++        if existing.get("amount_cents") != amount_cents or existing.get("currency") != currency:
++            raise PaymentValidationError("idempotency conflict")
++        response = existing.get("response")
++        if isinstance(response, dict):
++            return response
++
+     response = {
+         "payment_id": f"pay_{request_id}",
+         "request_id": request_id,
