@@ -37,6 +37,7 @@ timeout_seconds: 60
     assert task is not None
     assert "missing required metadata field: setup_command" in errors
     assert "missing required metadata field: score_command" in errors
+    assert "missing required metadata field: primary_failure_mode" in errors
 
 
 def test_validation_fails_for_missing_required_file(tmp_path, monkeypatch):
@@ -48,6 +49,24 @@ def test_validation_fails_for_missing_required_file(tmp_path, monkeypatch):
 
     assert task is not None
     assert "missing required file or directory: score.sh" in errors
+
+
+def test_validation_fails_for_blank_primary_failure_mode(tmp_path, monkeypatch):
+    task_dir = _make_task(tmp_path, "bad-task")
+    task_yaml = task_dir / "task.yaml"
+    task_yaml.write_text(
+        task_yaml.read_text(encoding="utf-8").replace(
+            "primary_failure_mode: test-failure-mode",
+            "primary_failure_mode: ''",
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("AGENTGYM_ROOT", str(tmp_path))
+
+    task, errors = validate_task_id("bad-task")
+
+    assert task is not None
+    assert "primary_failure_mode must be a non-empty string" in errors
 
 
 def _make_task(root: Path, task_id: str) -> Path:
@@ -65,6 +84,7 @@ language: python
 domain: api
 difficulty: easy
 description: Test task.
+primary_failure_mode: test-failure-mode
 setup_command: ./setup.sh
 public_test_command: python -m pytest tests
 hidden_test_command: python -m pytest hidden_tests

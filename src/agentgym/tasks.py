@@ -15,6 +15,7 @@ REQUIRED_METADATA_FIELDS = {
     "domain",
     "difficulty",
     "description",
+    "primary_failure_mode",
     "setup_command",
     "public_test_command",
     "hidden_test_command",
@@ -108,6 +109,12 @@ def validate_task(task: Task) -> list[str]:
     timeout = metadata.get("timeout_seconds")
     if not isinstance(timeout, int) or timeout <= 0:
         errors.append("timeout_seconds must be a positive integer")
+
+    primary_failure_mode = metadata.get("primary_failure_mode")
+    if "primary_failure_mode" in metadata and (
+        not isinstance(primary_failure_mode, str) or not primary_failure_mode.strip()
+    ):
+        errors.append("primary_failure_mode must be a non-empty string")
 
     for command_field in ("setup_command", "public_test_command", "hidden_test_command", "score_command"):
         command = metadata.get(command_field)

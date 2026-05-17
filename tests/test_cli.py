@@ -1,3 +1,5 @@
+import json
+
 from agentgym.cli import main
 from tests.test_tasks import _make_task
 
@@ -85,7 +87,32 @@ def test_run_suite_runs_all_tasks_and_writes_suite_result(tmp_path, monkeypatch,
     assert "task-hidden-fail  pass    fail    fail" in captured.out
     assert "2/2 tasks passed public tests" in captured.out
     assert "1/2 tasks passed hidden tests" in captured.out
+    assert "Failure modes:" in captured.out
+    assert "test-failure-mode  task-pass         pass    pass    pass" in captured.out
+    assert "test-failure-mode  task-hidden-fail  pass    fail    fail" in captured.out
     assert "Suite result: " in captured.out
+
+    suite_result_line = next(line for line in captured.out.splitlines() if line.startswith("Suite result: "))
+    suite_result_path = suite_result_line.removeprefix("Suite result: ")
+    suite_data = json.loads(open(suite_result_path, encoding="utf-8").read())
+    assert suite_data["tasks"][0]["primary_failure_mode"] == "test-failure-mode"
+    failure_modes_by_task = {item["task_id"]: item for item in suite_data["failure_modes"]}
+    assert failure_modes_by_task["task-pass"] == {
+        "failure_mode": "test-failure-mode",
+        "task_id": "task-pass",
+        "status": "pass",
+        "public_tests_passed": True,
+        "hidden_tests_passed": True,
+        "error_type": None,
+    }
+    assert failure_modes_by_task["task-hidden-fail"] == {
+        "failure_mode": "test-failure-mode",
+        "task_id": "task-hidden-fail",
+        "status": "fail",
+        "public_tests_passed": True,
+        "hidden_tests_passed": False,
+        "error_type": "hidden_tests_failed",
+    }
 
 
 def test_run_suite_rejects_invalid_tasks(tmp_path, monkeypatch, capsys):
@@ -118,6 +145,7 @@ language: python
 domain: test
 difficulty: easy
 description: Suite task.
+primary_failure_mode: test-failure-mode
 setup_command: {setup_command}
 public_test_command: {public_test_command}
 hidden_test_command: {hidden_test_command}

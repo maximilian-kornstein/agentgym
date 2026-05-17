@@ -4,6 +4,7 @@ language: python
 domain: api-input-validation
 difficulty: easy
 estimated_human_minutes: 20
+primary_failure_mode: cross-field-validation
 tags:
   - api
   - validation

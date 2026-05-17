@@ -139,27 +139,52 @@ def _run_suite() -> int:
     suite_dir = Path(tempfile.mkdtemp(prefix="agentgym-suite-"))
     suite_result_path = suite_dir / "suite_result.json"
     rows = [("id", "public", "hidden", "status")]
+    failure_mode_rows = [("failure_mode", "task", "public", "hidden", "status")]
     task_results = []
+    failure_mode_results = []
 
     for task in tasks:
         result = run_task(task)
+        primary_failure_mode = str(task.metadata["primary_failure_mode"])
+        public_status = _format_test_status(result.public_tests_passed)
+        hidden_status = _format_test_status(result.hidden_tests_passed)
         rows.append(
             (
                 task.id,
-                _format_test_status(result.public_tests_passed),
-                _format_test_status(result.hidden_tests_passed),
+                public_status,
+                hidden_status,
+                result.status,
+            )
+        )
+        failure_mode_rows.append(
+            (
+                primary_failure_mode,
+                task.id,
+                public_status,
+                hidden_status,
                 result.status,
             )
         )
         task_results.append(
             {
                 "task_id": task.id,
+                "primary_failure_mode": primary_failure_mode,
                 "status": result.status,
                 "public_tests_passed": result.public_tests_passed,
                 "hidden_tests_passed": result.hidden_tests_passed,
                 "result_path": str(result.result_path),
                 "logs_path": str(result.logs_path),
                 "run_workspace": str(result.run_workspace),
+                "error_type": result.error_type,
+            }
+        )
+        failure_mode_results.append(
+            {
+                "failure_mode": primary_failure_mode,
+                "task_id": task.id,
+                "status": result.status,
+                "public_tests_passed": result.public_tests_passed,
+                "hidden_tests_passed": result.hidden_tests_passed,
                 "error_type": result.error_type,
             }
         )
@@ -172,6 +197,9 @@ def _run_suite() -> int:
     print()
     print(f"{public_pass_count}/{total_count} tasks passed public tests")
     print(f"{hidden_pass_count}/{total_count} tasks passed hidden tests")
+    print()
+    print("Failure modes:")
+    _print_table(failure_mode_rows)
     print(f"Suite result: {suite_result_path}")
 
     suite_data = {
@@ -180,6 +208,7 @@ def _run_suite() -> int:
         "public_tests_passed": public_pass_count,
         "hidden_tests_passed": hidden_pass_count,
         "tasks": task_results,
+        "failure_modes": failure_mode_results,
     }
     suite_result_path.write_text(json.dumps(suite_data, indent=2) + "\n", encoding="utf-8")
 

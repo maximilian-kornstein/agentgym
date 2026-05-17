@@ -45,6 +45,7 @@ language: python
 domain: api-input-validation
 difficulty: easy
 estimated_human_minutes: 15
+primary_failure_mode: short-stable-failure-mode
 tags:
   - api
   - validation

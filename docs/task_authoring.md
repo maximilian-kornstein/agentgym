@@ -26,6 +26,12 @@ solution.patch
 - `score.sh` runs public and hidden checks.
 - `solution.patch` is the reference fix.
 
+## Metadata
+
+Each task must include `primary_failure_mode` in `task.yaml`. This should be a short stable label used by suite summaries, such as `input-normalization`, `cross-field-validation`, or `partial-update-semantics`.
+
+Keep `failure_modes` as secondary tags for broader classification.
+
 ## Quality Bar
 
 Accept a task only if:
